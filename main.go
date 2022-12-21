@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"github.com/jobala/picasso/canvas"
+	"github.com/jobala/picasso/painter"
+)
 
 func main() {
-	fmt.Println("Pablo Picasso")
+	slack := canvas.Slack()
+	painter := painter.NewPainter()
+
+	painter.PaintOn(slack)
 }

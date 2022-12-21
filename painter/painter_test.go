@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/h2non/gock"
+	"github.com/jobala/picasso/canvas"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,4 +42,25 @@ func TestPainter_NoInspirationStoredWhenError(t *testing.T) {
 
 	painter.getInspiration()
 	assert.NoFileExists(t, TEST_INSPIRATION_STORE)
+}
+
+func TestPainter_PaintWithoutInspiration(t *testing.T) {
+	painter := NewPainter()
+
+	slack := canvas.Slack()
+	err := painter.PaintOn(slack)
+
+	assert.Equal(t, err.Error(), "No inspiration found")
+}
+
+func TestPainter_PaintWithInspiration(t *testing.T) {
+	defer os.Remove(TEST_INSPIRATION_STORE)
+
+	painter := NewPainter()
+	painter.inspirationStore = TEST_INSPIRATION_STORE
+	painter.getInspiration()
+
+	slack := canvas.Slack()
+	err := painter.PaintOn(slack)
+	assert.NoError(t, err)
 }
