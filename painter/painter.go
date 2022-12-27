@@ -13,7 +13,7 @@ import (
 const ART_INSTITUTE_OF_CHICAGO = "https://api.artic.edu/api/v1/artworks?page=1&limit=30&fields=title,artist_title,image_id"
 const INSPIRATION_STORE = "inspiration.json"
 
-var cursor = 0
+var Cursor = 0
 
 func NewPainter() *Painter {
 	return &Painter{
@@ -23,7 +23,6 @@ func NewPainter() *Painter {
 }
 
 func (p *Painter) PaintOn(canvas Canvas) error {
-	p.getInspiration()
 	if p.hasNoInspiration() {
 		return errors.New("No inspiration found")
 	}
@@ -31,16 +30,19 @@ func (p *Painter) PaintOn(canvas Canvas) error {
 	inspirations := p.loadInspirations()
 
 	manifest := inspirations.Manifest
-	artWork := manifest[cursor]
+	artWork := manifest[Cursor]
 	artConfig := inspirations.Config
-	art := fmt.Sprintf("%s/%s/full/843,/0/default.jpg", artConfig.ImgUrl, artWork.Id)
+	artSrc := fmt.Sprintf("%s/%s/full/843,/0/default.jpg", artConfig.ImgUrl, artWork.Id)
 
-	fmt.Println("Drawing now")
-	canvas.Draw(art, artWork.Title, artWork.Artist)
+	err := canvas.Draw(artSrc, artWork.Title, artWork.Artist)
+	if weGotAnError(err) {
+		return err
+	}
+
 	return nil
 }
 
-func (p *Painter) getInspiration() error {
+func (p *Painter) GetInspiration() error {
 	inspirations, err := http.Get(p.sourceOfInspiration)
 	if weGotAnError(err) {
 		return err
@@ -70,15 +72,13 @@ func (p *Painter) save(inspirations *http.Response) {
 	defer storage.Close()
 
 	io.Copy(storage, inspirations.Body)
-
 }
 
-func (p *Painter) loadInspirations() Resp {
-	fmt.Println("Loading")
-	var insp Resp
+func (p *Painter) loadInspirations() Result {
+	var res Result
 	inspirations, _ := os.ReadFile(p.inspirationStore)
-	json.Unmarshal(inspirations, &insp)
-	return insp
+	json.Unmarshal(inspirations, &res)
+	return res
 }
 
 func weGotAnError(err error) bool {
@@ -89,7 +89,7 @@ func weGotAnError(err error) bool {
 }
 
 type Canvas interface {
-	Draw(art, title, artist string)
+	Draw(art, title, artist string) error
 }
 
 type Painter struct {
@@ -97,7 +97,7 @@ type Painter struct {
 	inspirationStore    string
 }
 
-type Resp struct {
+type Result struct {
 	Manifest []ArtWork `json:"data"`
 	Config   ArtConfig `json:"config"`
 }

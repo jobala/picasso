@@ -25,7 +25,7 @@ func TestPainter_InspiresThePainterWithImages(t *testing.T) {
 	painter := NewPainter()
 	painter.inspirationStore = TEST_INSPIRATION_STORE
 
-	err := painter.getInspiration()
+	err := painter.GetInspiration()
 	assert.NoError(t, err)
 
 	assert.FileExists(t, TEST_INSPIRATION_STORE)
@@ -40,7 +40,7 @@ func TestPainter_NoInspirationStoredWhenError(t *testing.T) {
 	painter := NewPainter()
 	painter.inspirationStore = TEST_INSPIRATION_STORE
 
-	painter.getInspiration()
+	painter.GetInspiration()
 	assert.NoFileExists(t, TEST_INSPIRATION_STORE)
 }
 
@@ -58,7 +58,7 @@ func TestPainter_PaintWithInspiration(t *testing.T) {
 
 	painter := NewPainter()
 	painter.inspirationStore = TEST_INSPIRATION_STORE
-	painter.getInspiration()
+	painter.GetInspiration()
 
 	slack := canvas.Slack()
 	err := painter.PaintOn(slack)
