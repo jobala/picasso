@@ -10,6 +10,7 @@ import (
 )
 
 const TEST_INSPIRATION_STORE = "test_inspiration.json"
+const ART_INSTITUTE_OF_CHICAGO = "https://api.artic.edu/api/v1/artworks?page=%d&limit=30&fields=title,artist_title,image_id"
 
 func TestPainter_InspiresThePainterWithImages(t *testing.T) {
 	defer gock.Off()
@@ -22,7 +23,7 @@ func TestPainter_InspiresThePainterWithImages(t *testing.T) {
 			"config": map[string]string{"iiif_url": "https://iiif_url.com"},
 		})
 
-	painter := NewPainter()
+	painter := New()
 	painter.inspirationStore = TEST_INSPIRATION_STORE
 
 	err := painter.GetInspiration()
@@ -37,7 +38,7 @@ func TestPainter_NoInspirationStoredWhenError(t *testing.T) {
 	gock.New(ART_INSTITUTE_OF_CHICAGO).
 		Reply(403)
 
-	painter := NewPainter()
+	painter := New()
 	painter.inspirationStore = TEST_INSPIRATION_STORE
 
 	painter.GetInspiration()
@@ -45,9 +46,9 @@ func TestPainter_NoInspirationStoredWhenError(t *testing.T) {
 }
 
 func TestPainter_PaintWithoutInspiration(t *testing.T) {
-	painter := NewPainter()
+	painter := New()
 
-	slack := canvas.Slack()
+	slack := canvas.Slack("")
 	err := painter.PaintOn(slack)
 
 	assert.Equal(t, err.Error(), "No inspiration found")
@@ -56,11 +57,11 @@ func TestPainter_PaintWithoutInspiration(t *testing.T) {
 func TestPainter_PaintWithInspiration(t *testing.T) {
 	defer os.Remove(TEST_INSPIRATION_STORE)
 
-	painter := NewPainter()
+	painter := New()
 	painter.inspirationStore = TEST_INSPIRATION_STORE
 	painter.GetInspiration()
 
-	slack := canvas.Slack()
+	slack := canvas.Slack("")
 	err := painter.PaintOn(slack)
 	assert.NoError(t, err)
 }

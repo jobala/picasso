@@ -10,19 +10,29 @@ import (
 	"os"
 )
 
-const ART_INSTITUTE_OF_CHICAGO = "https://api.artic.edu/api/v1/artworks?page=1&limit=30&fields=title,artist_title,image_id"
 const INSPIRATION_STORE = "inspiration.json"
+const CursorStore = "cursor.json"
 
-var Cursor = 0
+var page = 1
 
-func NewPainter() *Painter {
+func New() *Painter {
 	return &Painter{
-		sourceOfInspiration: ART_INSTITUTE_OF_CHICAGO,
+		sourceOfInspiration: fromPage(1),
 		inspirationStore:    INSPIRATION_STORE,
+		cursor: cursor{
+			page:  1,
+			index: 0,
+		},
 	}
 }
 
 func (p *Painter) PaintOn(canvas Canvas) error {
+	// if the cursor turned a new page, fetch new inspiration
+	if p.cursor.turnedPage {
+		p.sourceOfInspiration = fromPage(p.cursor.page)
+		p.GetInspiration()
+	}
+
 	if p.hasNoInspiration() {
 		return errors.New("No inspiration found")
 	}
@@ -30,21 +40,23 @@ func (p *Painter) PaintOn(canvas Canvas) error {
 	inspirations := p.loadInspirations()
 
 	manifest := inspirations.Manifest
-	artWork := manifest[Cursor]
-	artConfig := inspirations.Config
-	artSrc := fmt.Sprintf("%s/%s/full/843,/0/default.jpg", artConfig.ImgUrl, artWork.Id)
+	artWork := manifest[p.cursor.index]
+	// artConfig := inspirations.Config
+	// artSrc := fmt.Sprintf("%s/%s/full/843,/0/default.jpg", artConfig.ImgUrl, artWork.Id)
 
-	err := canvas.Draw(artSrc, artWork.Title, artWork.Artist)
-	if weGotAnError(err) {
-		return err
-	}
+	fmt.Println(p.cursor.index, artWork.Title)
+	// err := canvas.Draw(artSrc, artWork.Title, artWork.Artist)
+	// if err != nil {
+	//		return err
+	//	}
 
+	p.cursor.next()
 	return nil
 }
 
 func (p *Painter) GetInspiration() error {
 	inspirations, err := http.Get(p.sourceOfInspiration)
-	if weGotAnError(err) {
+	if err != nil {
 		return err
 	}
 	defer inspirations.Body.Close()
@@ -66,7 +78,7 @@ func (p *Painter) hasNoInspiration() bool {
 
 func (p *Painter) save(inspirations *http.Response) {
 	storage, err := os.Create(p.inspirationStore)
-	if weGotAnError(err) {
+	if err != nil {
 		panic("I can't store inspirations")
 	}
 	defer storage.Close()
@@ -81,11 +93,9 @@ func (p *Painter) loadInspirations() Result {
 	return res
 }
 
-func weGotAnError(err error) bool {
-	if err != nil {
-		return true
-	}
-	return false
+func fromPage(page int) string {
+	ART_INSTITUTE_OF_CHICAGO := "https://api.artic.edu/api/v1/artworks?page=%d&limit=30&fields=title,artist_title,image_id"
+	return fmt.Sprintf(ART_INSTITUTE_OF_CHICAGO, page)
 }
 
 type Canvas interface {
@@ -95,6 +105,7 @@ type Canvas interface {
 type Painter struct {
 	sourceOfInspiration string
 	inspirationStore    string
+	cursor              cursor
 }
 
 type Result struct {
