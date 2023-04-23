@@ -41,14 +41,14 @@ func (p *Painter) PaintOn(canvas Canvas) error {
 
 	manifest := inspirations.Manifest
 	artWork := manifest[p.cursor.index]
-	// artConfig := inspirations.Config
-	// artSrc := fmt.Sprintf("%s/%s/full/843,/0/default.jpg", artConfig.ImgUrl, artWork.Id)
+	artConfig := inspirations.Config
+	artSrc := fmt.Sprintf("%s/%s/full/843,/0/default.jpg", artConfig.ImgUrl, artWork.Id)
 
 	fmt.Println(p.cursor.index, artWork.Title)
-	// err := canvas.Draw(artSrc, artWork.Title, artWork.Artist)
-	// if err != nil {
-	//		return err
-	//	}
+	err := canvas.Draw(artSrc, artWork.Title, artWork.Artist)
+	if err != nil {
+		return err
+	}
 
 	p.cursor.next()
 	return nil
