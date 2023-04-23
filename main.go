@@ -23,6 +23,6 @@ func main() {
 			fmt.Println(fmt.Errorf("Couldn't paint: %v", err))
 			os.Exit(1)
 		}
-	}, 1*time.Second, context.Background())
+	}, 24*time.Hour, context.Background())
 
 }
